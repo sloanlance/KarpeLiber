@@ -1,2 +1,11 @@
+*-
+*.dot
+.data
+.dockerignore
+.github
 .idea
-venv
+.secrets
+.venv
+Dockerfile
+db
+docker-compose.yaml

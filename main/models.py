@@ -153,9 +153,16 @@ class ItemPage(models.Model):
     )
 
     @property
-    def url(self):
+    def url(self) -> Optional[str]:
+        '''
+        Return the URL to the specific item page in a volume, if the
+        volume exists and is available online.  Otherwise, return `None`.
+        :return: str or `None`
+        '''
         # TODO: get the host and base URL from app config
-        return self.volume.makeUrl(self.page)
+        if self.volume and self.volume.available:
+            return self.volume.makeUrl(str(self.page))
+        return None
 
     url.fget.short_description = 'Library URL for volume with page'
 

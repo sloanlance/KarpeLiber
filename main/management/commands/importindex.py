@@ -71,9 +71,11 @@ class Importer:
         # lower case month names, convert to number
         df['month'] = df['month'].apply(str.lower).apply(MONTHS.get)
 
-        # remove leading and trailing whitespace from topics and items
-        df['topic'] = df['topic'].apply(str.strip)
-        df['item'] = df['item'].apply(str.strip)
+        # remove leading, trailing, and embedded multiple whitespace
+        # from topics and items
+        multistrip = lambda s: ' '.join(s.split())
+        df['topic'] = df['topic'].apply(multistrip)
+        df['item'] = df['item'].apply(multistrip)
 
         # make columns integer: "year" for datetime compatibility,
         # "page" to remove ".0" from end

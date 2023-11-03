@@ -1,6 +1,8 @@
-#!/bin/bash 
+#!/bin/bash
 
-# Case insenstive match
+echo -n 'Starting at '; date -Iseconds
+
+# Case insensitive match
 shopt -s nocaseglob
 
 if [ -z "${ENV_FILE}" ]; then

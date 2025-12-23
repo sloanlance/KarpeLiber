@@ -1,0 +1,19 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block branding %}
+    <h1 id="site-name">
+        <a href="{% url 'admin:index' %}">{{ site_header|default:_('Django administration') }}</a>
+    </h1>
+{% endblock %}
+
+{% block footer %}
+    <hr>
+    <footer class="branding" style="padding: 10px 20px; border-top-width: 1px; border-top-style: solid;">
+        {% if IMAGE_TAG %}
+            <span style="font-weight: bold;">Image Tag:</span> {{ IMAGE_TAG }}
+        {% endif %}
+        {{ block.super }}
+    </footer>
+{% endblock %}

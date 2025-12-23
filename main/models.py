@@ -139,8 +139,7 @@ class ItemPage(models.Model):
         related_name='volumeItemPages',
         on_delete=models.DO_NOTHING,
         null=True)
-    # A few page numbers may be Roman numerals, have letter suffix, etc.
-    page = models.CharField('page number', max_length=20)
+    page = models.IntegerField('page number')
     date: datetime.date = models.DateField(
         'date of mention',
         null=True,
@@ -164,6 +163,8 @@ class ItemPage(models.Model):
     @property
     def url(self):
         # TODO: get the host and base URL from app config
+        if self.volume is None:
+            return None
         return self.volume.makeUrl(self.page)
 
     url.fget.short_description = 'Library URL for volume with page'
@@ -186,7 +187,9 @@ class ItemPage(models.Model):
         return result
 
     def __str__(self):
-        return f'Page {self.page} ({self.volume}, {self.date:%Y-%b})'
+        return (f'ItemPage {self.page} ('
+                f'{self.volume if self.volume else "NO_VOLUME"}, '
+                f'{self.date.strftime("%Y-%b") if self.date else "NO_DATE"})')
 
 
 class NoteType(models.Model):

@@ -77,8 +77,19 @@ class ModelAdminCsvImport(ModelAdmin):
 
             # TODO: Add support for TSV (why not?)
             # pandas delimiter autodetect didn't work with RPI sample data
+            csv_content = csv_file.read()
+            csv_decoded = None
+
+            try:
+                csv_decoded = csv_content.decode('utf-8')
+            except UnicodeDecodeError:
+                # handle common Windows encoding
+                csv_decoded = csv_content.decode('cp1252')
+
+            csv_decoded = csv_decoded.replace('’', "'")
+
             df = pd.read_csv(
-                io.StringIO(csv_file.read().decode('utf-8')),
+                io.StringIO(csv_decoded),
                 delimiter=',',
             )
 

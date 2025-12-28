@@ -41,6 +41,7 @@ class CsvImportForm(forms.Form):
     volume.required = True
 
     def __init__(self, *args, **kwargs):
+        volume = None
         if 'volume' in kwargs:
             volume = kwargs.pop('volume')
         super().__init__(*args, **kwargs)
@@ -69,7 +70,27 @@ class ModelAdminCsvImport(ModelAdmin):
     def import_csv(self, request):
         if request.method == 'POST':
             csv_file: InMemoryUploadedFile = request.FILES['csv_file']
-            volume = Volume.objects.get(pk=request.POST['volume'])
+            volume_id = request.POST.get('volume')
+            if not volume_id:
+                messages.error(
+                    request,
+                    'No volume was selected. Please choose a volume before importing.'
+                )
+                return redirect(request.path)
+            try:
+                volume = Volume.objects.get(pk=volume_id)
+            except Volume.DoesNotExist:
+                messages.error(
+                    request,
+                    'The selected volume does not exist. Please choose a valid volume.'
+                )
+                return redirect(request.path)
+            except (TypeError, ValueError):
+                messages.error(
+                    request,
+                    'The provided volume identifier is invalid. Please choose a valid volume.'
+                )
+                return redirect(request.path)
             logger.debug(csv_file)
 
             # TODO: use content_type for validation
@@ -80,13 +101,36 @@ class ModelAdminCsvImport(ModelAdmin):
             csv_content = csv_file.read()
             csv_decoded = None
 
-            try:
-                csv_decoded = csv_content.decode('utf-8')
-            except UnicodeDecodeError:
-                # handle common Windows encoding
-                csv_decoded = csv_content.decode('cp1252')
+            encodings_supported = ['utf-8', 'cp1252']
+            last_error = None
+            for encoding in encodings_supported:
+                try:
+                    csv_decoded = csv_content.decode(encoding)
+                    break
+                except UnicodeDecodeError as exc:
+                    last_error = exc
+            if csv_decoded is None:
+                logger.error(
+                    'Failed to decode uploaded CSV file. Tried encodings: %s',
+                    ', '.join(encodings_supported),
+                    exc_info=last_error,
+                )
+                self.message_user(
+                    request,
+                    f'Could not decode the uploaded CSV file. '
+                    f'Tried encodings: {", ".join(encodings_supported)}.',
+                    level=messages.ERROR,
+                )
+                return redirect(request.path)
 
-            csv_decoded = csv_decoded.replace('’', "'")
+            csv_decoded = (
+                csv_decoded
+                .replace('‘', "'")   # left single quotation mark
+                .replace('’', "'")   # right single quotation mark
+                .replace('“', '"')   # left double quotation mark
+                .replace('”', '"')   # right double quotation mark
+            )
+
 
             df = pd.read_csv(
                 io.StringIO(csv_decoded),
